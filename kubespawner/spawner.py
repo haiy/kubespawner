@@ -375,6 +375,15 @@ class KubeSpawner(Spawner):
         """
     )
 
+    user_node_mapping = Dict(
+        {},
+        config=True,
+        help="""
+        The user and node label mappings. map user to target node label
+            {"disktype=ssd":["user-a", "user-b"]}
+        """
+    )
+
     singleuser_node_selector = Dict(
         {},
         config=True,
@@ -909,6 +918,8 @@ class KubeSpawner(Spawner):
         labels = {
             'heritage': 'jupyterhub',
             'app': 'jupyterhub',
+            # add a user name label for node mapping
+            'owner': self.user.name,
         }
 
         labels.update(extra_labels)
@@ -933,6 +944,15 @@ class KubeSpawner(Spawner):
 
         annotations.update(extra_annotations)
         return annotations
+
+    def _get_node_selector(self):
+        if len(self.user_node_mapping) > 0:
+            for node_selector_str, users in self.user_node_mapping.items():
+                if self.user.name in users:
+                    sk, sv = node_selector_str.split("=")
+                    return {sk:sv}
+        return self.singleuser_node_selector
+
 
     @gen.coroutine
     def get_pod_manifest(self):
@@ -961,6 +981,8 @@ class KubeSpawner(Spawner):
 
         labels = self._build_pod_labels(self._expand_all(self.singleuser_extra_labels))
         annotations = self._build_common_annotations(self._expand_all(self.singleuser_extra_annotations))
+        target_node_selector  =  self._get_node_selector()
+        self.log.info("User %s will be scheduled to node with label %s.", self.user.name, str(target_node_selector))
 
         return make_pod(
             name=self.pod_name,
@@ -969,7 +991,7 @@ class KubeSpawner(Spawner):
             image_spec=self.singleuser_image_spec,
             image_pull_policy=self.singleuser_image_pull_policy,
             image_pull_secret=self.singleuser_image_pull_secrets,
-            node_selector=self.singleuser_node_selector,
+            node_selector=self._get_node_selector(),
             run_as_uid=singleuser_uid,
             fs_gid=singleuser_fs_gid,
             supplemental_gids=singleuser_supplemental_gids,
