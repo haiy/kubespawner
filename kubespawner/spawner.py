@@ -313,6 +313,15 @@ class KubeSpawner(Spawner):
         """
     )
 
+    img_node_mapping = Dict(
+        {},
+        config=True,
+        help="""
+        The user and node label mappings. map user to target node label
+            {"disktype=ssd":["user-a", "user-b"]}
+        """
+    )
+
     singleuser_image_spec = Unicode(
         'jupyterhub/singleuser:latest',
         config=True,
