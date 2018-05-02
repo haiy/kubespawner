@@ -1,6 +1,7 @@
 import weakref
 
 import kubernetes.client
+from kubernetes import  config
 
 _client_cache = {}
 
@@ -13,6 +14,7 @@ def shared_client(ClientType, *args, **kwargs):
     will all return the same instance until
     all references to the client are cleared.
     """
+    config.load_incluster_config()
     kwarg_key = tuple((key, kwargs[key]) for key in sorted(kwargs))
     cache_key = (ClientType, args, kwarg_key)
     client = None
