@@ -958,7 +958,7 @@ class KubeSpawner(Spawner):
                 if self.user.name in users:
                     sk, sv = node_selector_str.split("=")
                     return {sk:sv}
-        return self.singleuser_node_selector
+        return {}
 
     @gen.coroutine
     def get_pod_manifest(self):
@@ -989,6 +989,9 @@ class KubeSpawner(Spawner):
         annotations = self._build_common_annotations(self._expand_all(self.singleuser_extra_annotations))
 
         target_node_selector = self._get_node_selector()
+        if len(target_node_selector) == 0:
+            target_node_selector = self.singleuser_node_selector;
+        self.log.info("default node selector info : %s " , str(self.singleuser_node_selector))
         self.log.info("User %s will be scheduled to node with label %s.", self.user.name, str(target_node_selector))
 
         return make_pod(
@@ -998,7 +1001,7 @@ class KubeSpawner(Spawner):
             image_spec=self.singleuser_image_spec,
             image_pull_policy=self.singleuser_image_pull_policy,
             image_pull_secret=self.singleuser_image_pull_secrets,
-            node_selector=self.singleuser_node_selector,
+            node_selector=self.target_node_selector,
             run_as_uid=singleuser_uid,
             fs_gid=singleuser_fs_gid,
             supplemental_gids=singleuser_supplemental_gids,
