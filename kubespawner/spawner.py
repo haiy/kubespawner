@@ -1001,7 +1001,7 @@ class KubeSpawner(Spawner):
             image_spec=self.singleuser_image_spec,
             image_pull_policy=self.singleuser_image_pull_policy,
             image_pull_secret=self.singleuser_image_pull_secrets,
-            node_selector=self.target_node_selector,
+            node_selector=target_node_selector,
             run_as_uid=singleuser_uid,
             fs_gid=singleuser_fs_gid,
             supplemental_gids=singleuser_supplemental_gids,
